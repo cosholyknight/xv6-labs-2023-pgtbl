@@ -450,4 +450,30 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
   }
 }
 
-void vmprint(pagetable_t pagetable, )
+void
+vmprintwalk(uint64 paths[2][3], pagetable_t root, int cnt) {
+  if (cnt == 2) {
+    printf(" ..%d: pte %p pa %p\n", paths[0][0], paths[0][1], paths[0][2]);
+    printf(" .. ..%d: pte %p pa %p\n", paths[1][0], paths[1][1], paths[1][2]);
+  }
+  for (int i = 0; i < 512; i++) {
+    pte_t pte = root[i];
+    uint64 child = PTE2PA(pte);
+    if((pte & PTE_V) && (pte & (PTE_R|PTE_W|PTE_X)) == 0) {
+      if(cnt < 2) {
+        paths[cnt][0] = i;
+        paths[cnt][1] = pte;
+        paths[cnt][2] = child;
+      }
+      else continue;
+      vmprintwalk(paths, (pagetable_t)child, cnt + 1);
+    } else if (pte & PTE_V) {
+      printf(" .. .. ..%d: pte %p pa %p\n", i, pte, child);
+    }
+  }
+}
+void vmprint(pagetable_t root) {
+  uint64 paths[2][3];
+  printf("page table %p\n", root);
+  vmprintwalk(paths, root, 0);
+}
