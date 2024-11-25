@@ -137,6 +137,7 @@ exec(char *path, char **argv)
     iunlockput(ip);
     end_op();
   }
+  if(p->pid == 1) vmprint(p->pagetable);
   return -1;
 }
 
