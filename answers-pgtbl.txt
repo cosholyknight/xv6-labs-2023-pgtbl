@@ -3,4 +3,15 @@ Q: Which other xv6 system call(s) could be made faster using this shared page? E
 A: If we modify this shared page, there will be more system calls which could be made faster.
 We can add system time for uptime(), group id for getgid(), user id for getuid().
 
-Q: 
+Q: For every leaf page in the vmprint output, explain what it logically contains and what its
+permission bits are.
+
+A: For example:
+.. .. ..0: pte 0x0000000021fda01f pa 0x0000000087f68000
+Binary pte: 0000 0000 0000 0000 0000 0000 0000 0000 0010 0001 1111 1101 1010 0000 0001 1011
+Permission bits:
+PTE_R: 1
+PTE_W: 0
+PTE_X: 1
+PTE_U: 1
+So this is PTE of a text segment
