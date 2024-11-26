@@ -452,13 +452,22 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 
 void
 vmprintwalk(uint64 paths[2][3], pagetable_t root, int cnt) {
+
+  // If cnt = 2 (deep-level) then print root-level page table descrption
+  // and middle-level page table description
   if (cnt == 2) {
     printf(" ..%d: pte %p pa %p\n", paths[0][0], paths[0][1], paths[0][2]);
     printf(" .. ..%d: pte %p pa %p\n", paths[1][0], paths[1][1], paths[1][2]);
   }
+
+  // There are 2^9 = 512 PTEs in a page table
   for (int i = 0; i < 512; i++) {
     pte_t pte = root[i];
     uint64 child = PTE2PA(pte);
+
+    // if PTE is valid and does not have PTE_R | PTE_W | PTE_X
+    // then it is root-level and middle-level page table,
+    // save in paths for later printing.
     if((pte & PTE_V) && (pte & (PTE_R|PTE_W|PTE_X)) == 0) {
       if(cnt < 2) {
         paths[cnt][0] = i;
@@ -467,6 +476,9 @@ vmprintwalk(uint64 paths[2][3], pagetable_t root, int cnt) {
       }
       else continue;
       vmprintwalk(paths, (pagetable_t)child, cnt + 1);
+    
+    // if PTE is valid and have PTE_R | PTE_W | PTE_X
+    // then it is final-level page table, print it
     } else if (pte & PTE_V) {
       printf(" .. .. ..%d: pte %p pa %p\n", i, pte, child);
     }
