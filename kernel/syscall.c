@@ -68,6 +68,7 @@ argaddr(int n, uint64 *ip)
   *ip = argraw(n);
 }
 
+
 // Fetch the nth word-sized system call argument as a null-terminated string.
 // Copies into buf, at most max.
 // Returns string length if OK (including nul), -1 if error.
@@ -106,7 +107,7 @@ extern uint64 sys_close(void);
 extern uint64 sys_connect(void);
 #endif
 #ifdef LAB_PGTBL
-extern uint64 sys_pgaccess(void);
+extern int sys_pgaccess(void);
 #endif
 
 // An array mapping syscall numbers from syscall.h
@@ -137,7 +138,7 @@ static uint64 (*syscalls[])(void) = {
 [SYS_connect] sys_connect,
 #endif
 #ifdef LAB_PGTBL
-[SYS_pgaccess] sys_pgaccess,
+[SYS_pgaccess] (uint64 (*)(void))sys_pgaccess,
 #endif
 };
 

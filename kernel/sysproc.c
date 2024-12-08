@@ -5,6 +5,10 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "syscall.h"
+
+
+
 
 uint64
 sys_exit(void)
@@ -69,14 +73,45 @@ sys_sleep(void)
   return 0;
 }
 
-
+#define PTE_A (1<<6)
 #ifdef LAB_PGTBL
 int
 sys_pgaccess(void)
 {
-  // lab pgtbl: your code here.
-  return 0;
+    uint64 start;
+    int len;
+    uint64 vec;
+
+    // Lấy tham số từ user-space
+    argaddr(0, &start);
+    argint(1, &len);
+    argaddr(2, &vec);
+
+    // Giới hạn số trang để tránh quá tải
+    if (len > 32) // Giới hạn lên 32 nếu bitmask là uint32
+        len = 32;
+
+    uint32 bitmask = 0; // Sử dụng uint32 thay vì uint64
+    struct proc *p = myproc(); // Lấy tiến trình hiện tại
+
+    for(int i = 0; i < len; i++) {
+        uint64 va = start + i * PGSIZE;
+        pte_t *pte = walk(p->pagetable, va, 0);
+        if(pte && (*pte & PTE_V) && (*pte & PTE_U)) {
+            if(*pte & PTE_A) {
+                bitmask |= (1U << i); // Sử dụng 1U cho uint32
+                *pte &= ~PTE_A;
+            }
+        }
+    }
+
+    // Copy bitmask ra user-space
+    if(copyout(p->pagetable, vec, (char *)&bitmask, sizeof(bitmask)) < 0)
+        return -1;
+
+    return 0;
 }
+
 #endif
 
 uint64
